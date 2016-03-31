@@ -8,9 +8,10 @@ class Node(object):
     max_node = False
     parent = None
 
-    def __init__(self, parent, state):
+    def __init__(self, state, parent=None):
         self.parent = parent
-        self.max_node = not parent.max_node
+        if parent:
+            self.max_node = not parent.max_node
         self.state = state
 
     def __repr__(self):
@@ -24,48 +25,57 @@ class MinMax(object):
 
     root = None
 
-    def heuristic(self, state):
+    def heuristic(self, node):
         raise NotImplementedError()
 
     def expand_state(self, state):
         raise NotImplementedError()
 
-    def minimax(self, max_depth, node, alpha=0, beta=0):
+    def minimax(self, max_depth, node=None, alpha=0, beta=0):
         max_depth -= 1
 
         if not node:
             node = self.root
 
         if max_depth == 0:  # leaf node
-            return self.heuristic(node.state)
+            return self.heuristic(node)
 
         if len(node.children) == 0:
             states = self.expand_state(node.state)
-            node.children = [Node(node, state) for state in states]
+            node.children = [Node(state, node) for state in states]
 
-        values = dict()
+        if len(node.children) == 0:
+            return self.heuristic(node)
+
+        values = []
         for child in node.children:
-            values[child] = self.minimax(child)
+            values.append(self.minimax(max_depth, child))
 
         value = max(values) if node.max_node else min(values)
+        return value
 
+
+class FourInARowMinMax(MinMax):
+
+    def heuristic(self, node):
+        print("Heuristic:", node)
+        return node.state[-1]
+
+    def expand_state(self, state):
+        print("Expand:", state)
+        if len(state) > 1:
+            s1 = state[:int(len(state)/2)]
+            s2 = state[int(len(state)/2):]
+            return [s1, s2]
+        return []
 
 
 testdata = [10, 11, 9, 12, 14, 15, 13, 14, 5, 2, 4, 1, 3, 22, 20, 21]
 
-
-def expand_tree(node):
-    if len(node.state) > 1:
-        n1 = Node(node.state[:len(node.state)/2])
-        expand_tree(n1)
-        n2 = Node(node.state[len(node.state)/2:])
-        expand_tree(n2)
-        node.children = [n1, n2]
-        node.state = None
-    else:
-        node.state = node.state[0]
-
 root = Node(testdata)
-expand_tree(root)
-# import pdb;pdb.set_trace()
-print root
+root.max_node = True
+
+print(root)
+minimax = FourInARowMinMax()
+minimax.root = root
+print(minimax.minimax(5))
