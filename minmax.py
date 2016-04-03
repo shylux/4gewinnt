@@ -28,37 +28,35 @@ class MinMax(object):
     def heuristic(self, node):
         raise NotImplementedError()
 
-    def expand_state(self, state):
+    def expand_node(self, state):
         raise NotImplementedError()
 
     def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
-        max_depth -= 1
-
         if not node:
             node = self.root
 
         if max_depth == 0:  # leaf node
             return self.heuristic(node)
+        max_depth -= 1
 
         if len(node.children) == 0:
-            states = self.expand_state(node.state)
-            node.children = [Node(state, node) for state in states]
+            self.expand_node(node)
 
         if len(node.children) == 0:
             return self.heuristic(node)
 
-        value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
+        node.value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
         for child in node.children:
             child_value = self.minmax(max_depth, child, alpha, beta)
             if node.max_node:
-                value = max(value, child_value)
-                alpha = value
-                if value > beta:  # check for pruning
-                    return value
+                node.value = max(node.value, child_value)
+                alpha = node.value
+                if alpha > beta:  # check for pruning
+                    return node.value
             else:
-                value = min(value, child_value)
-                beta = value
-                if value < alpha:
-                    return value
+                node.value = min(node.value, child_value)
+                beta = node.value
+                if beta < alpha:
+                    return node.value
 
-        return value
+        return node.value

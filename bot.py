@@ -148,79 +148,116 @@ class MinMax(object):
     def heuristic(self, node):
         raise NotImplementedError()
 
-    def expand_state(self, state):
+    def expand_node(self, state):
         raise NotImplementedError()
 
     def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
-        max_depth -= 1
-
         if not node:
             node = self.root
 
         if max_depth == 0:  # leaf node
             return self.heuristic(node)
+        max_depth -= 1
 
         if len(node.children) == 0:
-            states = self.expand_state(node.state)
-            node.children = [Node(state, node) for state in states]
+            self.expand_node(node)
 
         if len(node.children) == 0:
             return self.heuristic(node)
 
-        value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
+        node.value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
         for child in node.children:
             child_value = self.minmax(max_depth, child, alpha, beta)
             if node.max_node:
-                value = max(value, child_value)
-                alpha = value
-                if value > beta:  # check for pruning
-                    return value
+                node.value = max(node.value, child_value)
+                alpha = node.value
+                if alpha > beta:  # check for pruning
+                    return node.value
             else:
-                value = min(value, child_value)
-                beta = value
-                if value < alpha:
-                    return value
+                node.value = min(node.value, child_value)
+                beta = node.value
+                if beta < alpha:
+                    return node.value
 
-        return value
+        return node.value
 import sys
 import numpy as np
+import operator
 
 
 class SupiBot(Bot, MinMax):
 
     root = None
+    player_id_made_last_turn = None
 
     def make_turn(self):
-        best_col = 0
-        best_rating = -sys.maxsize
+        if not self.root:
+            self.root = Node(self.board)
+            self.root.max_node = True
+            self.root.value = 0
+
+        self.minmax(1)
+
+        best_option = max(self.root.children, key=operator.attrgetter('value'))
+        self.place_disc(best_option.play_col)
+
+
+        # best_col = 0
+        # best_rating = -sys.maxsize
+        # for col_nr in range(self.cols()):
+        #     try:
+        #         sim = self.simulate_place_disc(self.board, col_nr, self.id())
+        #     except Bot.ColumnFullException:
+        #         continue
+        #     sim_rating = self.rate_state(sim)
+        #     if self.id() == 2:
+        #         sim_rating = -sim_rating  # the rating is done from view of player 1
+        #
+        #     if sim_rating > best_rating:
+        #         best_col = col_nr
+        #         best_rating = sim_rating
+        #
+        # self.place_disc(best_col)
+
+    def expand_node(self, node):
+        if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
+            return
+
+        player_id = self.id() if node.max_node else self.opponent_id()  # other player than node
         for col_nr in range(self.cols()):
             try:
-                sim = self.simulate_place_disc(self.board, col_nr, self.id())
+                new_state = self.simulate_place_disc(node.state, col_nr, player_id)
             except Bot.ColumnFullException:
                 continue
-            sim_rating = self.rate_state(sim)
-            if self.id() == 2:
-                sim_rating = -sim_rating  # the rating is done from view of player 1
+            new_node = Node(new_state, node)
+            new_node.play_col = col_nr
+            node.children.append(new_node)
 
-            if sim_rating > best_rating:
-                best_col = col_nr
-                best_rating = sim_rating
+    def opponent_id(self):
+        return 2 if self.id() == 1 else 1
 
-        self.place_disc(best_col)
+    def heuristic(self, node):
+        node.value = self.rate_state(node.state)
+        return node.value
+
 
     def rate_state(self, board):
-        """ Rates the board. Positive outcomes means better vor player 1; negative better for player 2. """
+        """ Rates the board. A higher value means a better chance to win. """
         board_sum = 0
         for line in self.double_lines(board):
             value = SupiBot.rate_line(line)
-            board_sum += value
+            if self.id() == 2:  # invert value if we are player 2
+                value = -value
+
             if value == sys.maxsize or value == -sys.maxsize:  # return if someone won
                 return value
+
+            board_sum += value
         return board_sum
 
     @staticmethod
     def rate_line(line_values):
-        """ Rates the line. """
+        """ Rates the line from the perspective of player 1. """
         line_sum = 0
         curr_player = 0  # the current owner of the last non-empty spot in the line
         possible_fours = []  # eg. [(idx, my_stone_count)]

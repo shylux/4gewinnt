@@ -7,6 +7,10 @@ class FourInARowMinMax(MinMax):
         print("Heuristic:", node)
         return node.state[-1]
 
+    def expand_node(self, node):
+        states = self.expand_state(node.state)
+        node.children = [Node(state, node) for state in states]
+
     def expand_state(self, state):
         print("Expand:", state)
         if len(state) > 1:
