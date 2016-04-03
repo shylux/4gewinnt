@@ -1,4 +1,4 @@
-from sys import maxsize
+import sys
 
 
 class Node(object):
@@ -31,7 +31,7 @@ class MinMax(object):
     def expand_state(self, state):
         raise NotImplementedError()
 
-    def minimax(self, max_depth, node=None, alpha=0, beta=0):
+    def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
         max_depth -= 1
 
         if not node:
@@ -47,35 +47,18 @@ class MinMax(object):
         if len(node.children) == 0:
             return self.heuristic(node)
 
-        values = []
+        value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
         for child in node.children:
-            values.append(self.minimax(max_depth, child))
+            child_value = self.minmax(max_depth, child, alpha, beta)
+            if node.max_node:
+                value = max(value, child_value)
+                alpha = value
+                if value > beta:  # check for pruning
+                    return value
+            else:
+                value = min(value, child_value)
+                beta = value
+                if value < alpha:
+                    return value
 
-        value = max(values) if node.max_node else min(values)
         return value
-
-
-class FourInARowMinMax(MinMax):
-
-    def heuristic(self, node):
-        print("Heuristic:", node)
-        return node.state[-1]
-
-    def expand_state(self, state):
-        print("Expand:", state)
-        if len(state) > 1:
-            s1 = state[:int(len(state)/2)]
-            s2 = state[int(len(state)/2):]
-            return [s1, s2]
-        return []
-
-
-testdata = [10, 11, 9, 12, 14, 15, 13, 14, 5, 2, 4, 1, 3, 22, 20, 21]
-
-root = Node(testdata)
-root.max_node = True
-
-print(root)
-minimax = FourInARowMinMax()
-minimax.root = root
-print(minimax.minimax(5))

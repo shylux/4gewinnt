@@ -11,7 +11,6 @@
 
 from sys import stdin, stdout
 import numpy as np
-import sys
 import time
 
 
@@ -119,9 +118,77 @@ class Bot(object):
 
     class ColumnFullException(Exception):
         """ Raised when attempting to place disk in full column. """
+import sys
 
 
-class SupiBot(Bot):
+class Node(object):
+
+    state = None
+    children = []
+    max_node = False
+    parent = None
+
+    def __init__(self, state, parent=None):
+        self.parent = parent
+        if parent:
+            self.max_node = not parent.max_node
+        self.state = state
+
+    def __repr__(self):
+        if len(self.children) == 0:
+            return str(self.state)
+        else:
+            return "(" + ", ".join([str(child) for child in self.children]) + ")"
+
+
+class MinMax(object):
+
+    root = None
+
+    def heuristic(self, node):
+        raise NotImplementedError()
+
+    def expand_state(self, state):
+        raise NotImplementedError()
+
+    def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
+        max_depth -= 1
+
+        if not node:
+            node = self.root
+
+        if max_depth == 0:  # leaf node
+            return self.heuristic(node)
+
+        if len(node.children) == 0:
+            states = self.expand_state(node.state)
+            node.children = [Node(state, node) for state in states]
+
+        if len(node.children) == 0:
+            return self.heuristic(node)
+
+        value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
+        for child in node.children:
+            child_value = self.minmax(max_depth, child, alpha, beta)
+            if node.max_node:
+                value = max(value, child_value)
+                alpha = value
+                if value > beta:  # check for pruning
+                    return value
+            else:
+                value = min(value, child_value)
+                beta = value
+                if value < alpha:
+                    return value
+
+        return value
+import sys
+import numpy as np
+
+
+class SupiBot(Bot, MinMax):
+
+    root = None
 
     def make_turn(self):
         best_col = 0
@@ -145,14 +212,14 @@ class SupiBot(Bot):
         """ Rates the board. Positive outcomes means better vor player 1; negative better for player 2. """
         board_sum = 0
         for line in self.double_lines(board):
-            value = self.rate_line(line)
+            value = SupiBot.rate_line(line)
             board_sum += value
             if value == sys.maxsize or value == -sys.maxsize:  # return if someone won
                 return value
         return board_sum
 
     @staticmethod
-    def rate_line(self, line_values):
+    def rate_line(line_values):
         """ Rates the line. """
         line_sum = 0
         curr_player = 0  # the current owner of the last non-empty spot in the line
