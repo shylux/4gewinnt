@@ -129,7 +129,6 @@ class Node(object):
     parent = None
 
     def __init__(self, state, parent=None):
-        self.parent = parent
         if parent:
             self.max_node = not parent.max_node
         self.state = state
@@ -163,7 +162,8 @@ class MinMax(object):
             self.expand_node(node)
 
         if len(node.children) == 0:
-            return self.heuristic(node)
+            node.value = self.heuristic(node)
+            return node.value
 
         node.value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
         for child in node.children:
@@ -172,12 +172,17 @@ class MinMax(object):
                 node.value = max(node.value, child_value)
                 alpha = node.value
                 if alpha > beta:  # check for pruning
-                    return node.value
+                    break
             else:
                 node.value = min(node.value, child_value)
                 beta = node.value
                 if beta < alpha:
-                    return node.value
+                    break
+
+        # sort for optimization
+        node.children.sort(key=lambda n: -getattr(n, "value", sys.maxsize))
+        if not node.max_node:
+            node.children = list(reversed(node.children))
 
         return node.value
 import sys
@@ -191,15 +196,23 @@ class SupiBot(Bot, MinMax):
     player_id_made_last_turn = None
 
     def make_turn(self):
-        if not self.root:
-            self.root = Node(self.board)
-            self.root.max_node = True
-            self.root.value = 0
+        # if not self.root:
+        self.root = Node(self.board)
+        self.root.max_node = True
+        self.root.value = 0
 
-        self.minmax(1)
+        # update board state
+        # if not (self.root.state - self.board).all():
+        #     for his_turn in self.root.children:
+        #         if (self.board - his_turn.state).all():
+        #             self.root = his_turn
+        #             break
 
-        best_option = max(self.root.children, key=operator.attrgetter('value'))
+        self.minmax(4)
+
+        best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
+        self.root = best_option
 
 
         # best_col = 0
