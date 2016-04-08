@@ -123,15 +123,18 @@ import sys
 
 class Node(object):
 
-    state = None
-    children = []
-    max_node = False
-    parent = None
+    
 
     def __init__(self, state, parent=None):
         if parent:
             self.max_node = not parent.max_node
+            if(self.max_node):
+                self.value = -sys.maxsize
+            else:
+                self.value = sys.maxsize
         self.state = state
+        self.children = []
+        self.parent = parent
 
     def __repr__(self):
         if len(self.children) == 0:
@@ -142,7 +145,8 @@ class Node(object):
 
 class MinMax(object):
 
-    root = None
+    def __init__(self):
+        self.root = None
 
     def heuristic(self, node):
         raise NotImplementedError()
@@ -150,33 +154,37 @@ class MinMax(object):
     def expand_node(self, state):
         raise NotImplementedError()
 
-    def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
-        if not node:
-            node = self.root
+    def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize,isMaxPlayer = 1):
 
+        #print (str(node.max_node == True)+ " "+	str(max_depth))
         if max_depth == 0:  # leaf node
+            node.value = self.heuristic(node)
+            #print (str(node.value)) 
             return self.heuristic(node)
-        max_depth -= 1
+
 
         if len(node.children) == 0:
             self.expand_node(node)
 
         if len(node.children) == 0:
             node.value = self.heuristic(node)
+            #print (str(node.value))            
             return node.value
 
-        node.value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
+        node.value = -sys.maxsize if isMaxPlayer else sys.maxsize  # initialize with worst value
         for child in node.children:
-            child_value = self.minmax(max_depth, child, alpha, beta)
-            if node.max_node:
+            
+            if isMaxPlayer == 1:
+                child_value = self.minmax(max_depth-1, child, alpha, beta,0)
                 node.value = max(node.value, child_value)
                 alpha = node.value
-                if alpha > beta:  # check for pruning
+                if alpha >= beta:  # check for pruning
                     break
             else:
+                child_value = self.minmax(max_depth-1, child, alpha, beta,1)
                 node.value = min(node.value, child_value)
                 beta = node.value
-                if beta < alpha:
+                if beta <= alpha:
                     break
 
         # sort for optimization
@@ -191,9 +199,10 @@ import operator
 
 
 class SupiBot(Bot, MinMax):
+    def __init__(self):
 
-    root = None
-    player_id_made_last_turn = None
+        self.root = None
+        self.player_id_made_last_turn = None
 
     def make_turn(self):
         # if not self.root:
@@ -208,8 +217,10 @@ class SupiBot(Bot, MinMax):
         #             self.root = his_turn
         #             break
 
-        self.minmax(4)
+        self.minmax(6,self.root)
 
+        #for var in self.root.children:
+        #    print(var.value)
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
@@ -250,17 +261,21 @@ class SupiBot(Bot, MinMax):
         return 2 if self.id() == 1 else 1
 
     def heuristic(self, node):
+		
         node.value = self.rate_state(node.state)
+        print (node.value)
         return node.value
 
 
     def rate_state(self, board):
         """ Rates the board. A higher value means a better chance to win. """
         board_sum = 0
+        #print(str(board))
         for line in self.double_lines(board):
             value = SupiBot.rate_line(line)
-            if self.id() == 2:  # invert value if we are player 2
-                value = -value
+            #double invert rating?
+            #if self.id() == 2:  # invert value if we are player 2
+            #    value = -value
 
             if value == sys.maxsize or value == -sys.maxsize:  # return if someone won
                 return value
@@ -268,7 +283,7 @@ class SupiBot(Bot, MinMax):
             board_sum += value
         return board_sum
 
-    @staticmethod
+    #@staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
@@ -298,6 +313,7 @@ class SupiBot(Bot, MinMax):
                         line_sum -= value
 
                     # check if someone won
+                    #print(four_chance)
                     if four_chance[1] == 4:  # four stone = win
                         if curr_player == 1:
                             return sys.maxsize
@@ -331,4 +347,22 @@ class SupiBot(Bot, MinMax):
 
 if __name__ == '__main__':
     """ Run the bot! """
-    SupiBot().run()
+#    board = np.zeros((6, 7), dtype=np.uint8)  # Access with [row_nr, col_nr]. [0,0] is on the top left.
+    supibot = SupiBot()
+    supibot.settings['your_botid'] = 1
+    supibot.settings['field_columns'] = 7
+    supibot.settings['field_rows'] = 6
+    supibot.board[5][0] = 2
+    supibot.board[4][0] = 2
+    supibot.board[3][0] = 2
+    supibot.board[5][6] = 1
+    #supibot.board[0][1] = 2
+    supibot.board[4][6] = 1
+    #supibot.board[1][5] = 2
+    supibot.board[3][6] = 1
+    #supibot.board[2][0] = 2
+    #supibot.board[3][6] = 1
+    #supibot.board[3][0]	= 2    
+
+
+    supibot.make_turn()
