@@ -28,4 +28,4 @@ root.max_node = True
 print(root)
 minimax = FourInARowMinMax()
 minimax.root = root
-print(minimax.minmax(5))
+print(minimax.minmax(5, root))

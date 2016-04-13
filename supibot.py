@@ -3,7 +3,6 @@ from minmax import Node
 from minmax import MinMax
 import sys
 import numpy as np
-import operator
 
 
 class SupiBot(Bot, MinMax):
@@ -11,6 +10,7 @@ class SupiBot(Bot, MinMax):
     def __init__(self):
         self.root = None
         self.player_id_made_last_turn = None
+
     def make_turn(self):
         # if not self.root:
         self.root = Node(self.board)
@@ -24,12 +24,12 @@ class SupiBot(Bot, MinMax):
         #             self.root = his_turn
         #             break
 
-        self.minmax(4,self.root)
+        for i in range(7):
+            self.minmax(i,self.root)
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
-
 
         # best_col = 0
         # best_rating = -sys.maxsize
@@ -69,7 +69,6 @@ class SupiBot(Bot, MinMax):
         node.value = self.rate_state(node.state)
         return node.value
 
-
     def rate_state(self, board):
         """ Rates the board. A higher value means a better chance to win. """
         board_sum = 0
@@ -83,7 +82,8 @@ class SupiBot(Bot, MinMax):
 
             board_sum += value
         return board_sum
-   
+
+    @staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
