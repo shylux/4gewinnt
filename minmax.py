@@ -35,7 +35,6 @@ class MinMax(object):
         
         if max_depth == 0:  # leaf node
             return self.heuristic(node)
-        max_depth -= 1
 
         if len(node.children) == 0:
             self.expand_node(node)
