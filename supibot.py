@@ -12,41 +12,24 @@ class SupiBot(Bot, MinMax):
         self.player_id_made_last_turn = None
 
     def make_turn(self):
-        # if not self.root:
-        self.root = Node(self.board)
-        self.root.max_node = True
-        self.root.value = 0
+        if not self.root:
+            self.root = Node(self.board)
+            self.root.max_node = True
+            self.root.value = 0
 
         # update board state
-        # if not (self.root.state - self.board).all():
-        #     for his_turn in self.root.children:
-        #         if (self.board - his_turn.state).all():
-        #             self.root = his_turn
-        #             break
+        if not (self.root.state - self.board).all():
+            for his_turn in self.root.children:
+                if (self.board - his_turn.state).all():
+                    self.root = his_turn
+                    break
 
-        for i in range(7):
-            self.minmax(i,self.root)
+        for i in range(6):
+            self.minmax(i, self.root)
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
-
-        # best_col = 0
-        # best_rating = -sys.maxsize
-        # for col_nr in range(self.cols()):
-        #     try:
-        #         sim = self.simulate_place_disc(self.board, col_nr, self.id())
-        #     except Bot.ColumnFullException:
-        #         continue
-        #     sim_rating = self.rate_state(sim)
-        #     if self.id() == 2:
-        #         sim_rating = -sim_rating  # the rating is done from view of player 1
-        #
-        #     if sim_rating > best_rating:
-        #         best_col = col_nr
-        #         best_rating = sim_rating
-        #
-        # self.place_disc(best_col)
 
     def expand_node(self, node):
         if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
@@ -60,13 +43,13 @@ class SupiBot(Bot, MinMax):
                 continue
             new_node = Node(new_state, node)
             new_node.play_col = col_nr
+            new_node.value = self.rate_state(new_node.state)
             node.children.append(new_node)
 
     def opponent_id(self):
         return 2 if self.id() == 1 else 1
 
     def heuristic(self, node):
-        node.value = self.rate_state(node.state)
         return node.value
 
     def rate_state(self, board):

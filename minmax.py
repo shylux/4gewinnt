@@ -6,10 +6,7 @@ class Node(object):
     def __init__(self, state, parent=None):
         if parent:
             self.max_node = not parent.max_node
-            if self.max_node:
-                self.value = -sys.maxsize
-            else:
-                self.value = sys.maxsize
+
         self.state = state
         self.children = []
         self.parent = parent
