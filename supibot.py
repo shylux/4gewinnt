@@ -8,9 +8,9 @@ import operator
 
 class SupiBot(Bot, MinMax):
 
-    root = None
-    player_id_made_last_turn = None
-
+    def __init__(self):
+        self.root = None
+        self.player_id_made_last_turn = None
     def make_turn(self):
         # if not self.root:
         self.root = Node(self.board)
@@ -84,7 +84,7 @@ class SupiBot(Bot, MinMax):
             board_sum += value
         return board_sum
 
-    @staticmethod
+    #@staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
