@@ -24,7 +24,7 @@ class SupiBot(Bot, MinMax):
         #             self.root = his_turn
         #             break
 
-        self.minmax(4,self.root)
+        self.minmax(6,self.root)
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
@@ -83,7 +83,7 @@ class SupiBot(Bot, MinMax):
 
             board_sum += value
         return board_sum
-   
+   @staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0

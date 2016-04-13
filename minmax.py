@@ -9,7 +9,7 @@ class Node(object):
             if(self.max_node):
                 self.value = -sys.maxsize
             else:
-                self.value = sys.minsize
+                self.value = sys.maxsize
         self.state = state
         self.children = []
         self.parent = parent
