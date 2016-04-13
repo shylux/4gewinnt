@@ -6,14 +6,13 @@ class Node(object):
     def __init__(self, state, parent=None):
         if parent:
             self.max_node = not parent.max_node
-            if(self.max_node):
+            if self.max_node:
                 self.value = -sys.maxsize
             else:
                 self.value = sys.maxsize
         self.state = state
         self.children = []
         self.parent = parent
-
 
     def __repr__(self):
         if len(self.children) == 0:
@@ -25,6 +24,7 @@ class Node(object):
 class MinMax(object):
     def __init__(self):
         self.root = None
+
     def heuristic(self, node):
         raise NotImplementedError()
 
