@@ -8,8 +8,9 @@ import time
 
 class SupiBot(Bot, MinMax):
 
-    def __init__(self):
+    def __init__(self,debugMode = False):
         self.root = None
+        self.debugMode = debugMode
         self.player_id_made_last_turn = None
 
     def make_turn(self):
@@ -30,11 +31,14 @@ class SupiBot(Bot, MinMax):
         for i in range(42):
             self.minmax(i, self.root)
             if time.time() - start > 0.5:
+                if self.debugMode:
+                    print('current depth '+str(i))
                 break
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
+        self.root = None #there are some crazy behaviors when the three remains, and it's easier to debug
 
     def expand_node(self, node):
         if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
@@ -48,7 +52,10 @@ class SupiBot(Bot, MinMax):
                 continue
             new_node = Node(new_state, node)
             new_node.play_col = col_nr
+            
             new_node.value = self.rate_state(new_node.state)
+            if self.debugMode:
+                print('col-no:' + str(col_nr)+ ' '+str(new_node.value))
             node.children.append(new_node)
 
     def opponent_id(self):
@@ -64,7 +71,8 @@ class SupiBot(Bot, MinMax):
             value = SupiBot.rate_line(line)
             if self.id() == 2:  # invert value if we are player 2
                 value = -value
-
+            
+                        
             if value == sys.maxsize or value == -sys.maxsize:  # return if someone won
                 return value
 
