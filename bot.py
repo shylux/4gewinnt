@@ -206,7 +206,8 @@ class SupiBot(Bot, MinMax):
         #             self.root = his_turn
         #             break
 
-        self.minmax(6,self.root)
+        for i in range(7):
+            self.minmax(i,self.root)
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
