@@ -123,15 +123,17 @@ import sys
 
 class Node(object):
 
-    state = None
-    children = []
-    max_node = False
-    parent = None
-
     def __init__(self, state, parent=None):
         if parent:
             self.max_node = not parent.max_node
+            if(self.max_node):
+                self.value = -sys.maxsize
+            else:
+                self.value = sys.minsize
         self.state = state
+        self.children = []
+        self.parent = parent
+
 
     def __repr__(self):
         if len(self.children) == 0:
@@ -141,9 +143,8 @@ class Node(object):
 
 
 class MinMax(object):
-
-    root = None
-
+    def __init__(self):
+        self.root = None
     def heuristic(self, node):
         raise NotImplementedError()
 
@@ -151,9 +152,7 @@ class MinMax(object):
         raise NotImplementedError()
 
     def minmax(self, max_depth, node=None, alpha=-sys.maxsize, beta=sys.maxsize):
-        if not node:
-            node = self.root
-
+        
         if max_depth == 0:  # leaf node
             return self.heuristic(node)
         max_depth -= 1
@@ -167,16 +166,16 @@ class MinMax(object):
 
         node.value = -sys.maxsize if node.max_node else sys.maxsize  # initialize with worst value
         for child in node.children:
-            child_value = self.minmax(max_depth, child, alpha, beta)
+            child_value = self.minmax(max_depth-1, child, alpha, beta)
             if node.max_node:
                 node.value = max(node.value, child_value)
                 alpha = node.value
-                if alpha > beta:  # check for pruning
+                if alpha >= beta:  # check for pruning
                     break
             else:
                 node.value = min(node.value, child_value)
                 beta = node.value
-                if beta < alpha:
+                if beta <= alpha:
                     break
 
         # sort for optimization
@@ -192,9 +191,9 @@ import operator
 
 class SupiBot(Bot, MinMax):
 
-    root = None
-    player_id_made_last_turn = None
-
+    def __init__(self):
+        self.root = None
+        self.player_id_made_last_turn = None
     def make_turn(self):
         # if not self.root:
         self.root = Node(self.board)
@@ -268,7 +267,7 @@ class SupiBot(Bot, MinMax):
             board_sum += value
         return board_sum
 
-    @staticmethod
+    #@staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
