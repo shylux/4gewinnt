@@ -129,7 +129,7 @@ class Node(object):
             if(self.max_node):
                 self.value = -sys.maxsize
             else:
-                self.value = sys.minsize
+                self.value = sys.maxsize
         self.state = state
         self.children = []
         self.parent = parent
@@ -155,7 +155,6 @@ class MinMax(object):
         
         if max_depth == 0:  # leaf node
             return self.heuristic(node)
-        max_depth -= 1
 
         if len(node.children) == 0:
             self.expand_node(node)
@@ -207,7 +206,7 @@ class SupiBot(Bot, MinMax):
         #             self.root = his_turn
         #             break
 
-        self.minmax(4)
+        self.minmax(6,self.root)
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
@@ -266,8 +265,7 @@ class SupiBot(Bot, MinMax):
 
             board_sum += value
         return board_sum
-
-    #@staticmethod
+    @staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
