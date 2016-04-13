@@ -3,6 +3,7 @@ from minmax import Node
 from minmax import MinMax
 import sys
 import numpy as np
+import time
 
 
 class SupiBot(Bot, MinMax):
@@ -23,9 +24,13 @@ class SupiBot(Bot, MinMax):
                 if (self.board - his_turn.state).all():
                     self.root = his_turn
                     break
-
-        for i in range(6):
+                    
+        #fixed search time per turn: 0.5s
+        start = time.time()
+        for i in range(42):
             self.minmax(i, self.root)
+            if time.time() - start > 0.5:
+                break
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
