@@ -83,8 +83,7 @@ class SupiBot(Bot, MinMax):
 
             board_sum += value
         return board_sum
-
-    @staticmethod
+   
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
