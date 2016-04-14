@@ -1,6 +1,7 @@
 from supibot import SupiBot
 import numpy as np
 import sys
+import shelve
 
 #create valid boards for opening position
 class boardCreator:
@@ -9,6 +10,7 @@ class boardCreator:
         self.board = np.zeros((6, 7), dtype=np.uint8)
         self.boards = list(range(level+1))
         self.level = level
+        self.filename = 'stored_boards.db'
         for i in self.boards:
             self.boards[i] = {}
             
@@ -35,10 +37,18 @@ class boardCreator:
                 #remove all boards with 4 or more connected lines
                 if value == -sys.maxsize or value == sys.maxsize:
                     del self.boards[y][str(board)]
-            
+
+    def store_boards(self):
+        d = shelve.open(self.filename) 
+        d['opening_boards'] = self.boards
+        d.close()
+    def restore_boards(self):
+        d = shelve.open(self.filename)
+        self.boards = d['opening_boards']
+    
                 
         
-level = 7
+level = 3
 creator = boardCreator(level)
 creator.bot.settings['your_botid'] = 1
 creator.bot.settings['field_columns'] = 7
@@ -46,5 +56,8 @@ creator.bot.settings['field_rows'] = 6
 creator.create_boards()
 print(len(creator.boards[level]))
 creator.remove_invalid_boards()
+print(len(creator.boards[level]))
+creator.store_boards()
+creator.restore_boards()
 print(len(creator.boards[level]))
 

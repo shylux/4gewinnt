@@ -13,7 +13,6 @@ from sys import stdin, stdout
 import numpy as np
 import time
 
-
 class Bot(object):
 
     settings = dict()

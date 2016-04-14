@@ -37,7 +37,7 @@ class SupiBot(Bot, MinMax):
         time_slice = 0.5
 
 		#reduce time_slice if we have to hurry up        
-		if self.time_left() < 4000:
+        if self.time_left() < 4000:
             time_slice = 0.3
             
         for i in range(42):
