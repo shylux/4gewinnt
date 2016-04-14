@@ -4,7 +4,7 @@ from minmax import MinMax
 import sys
 import numpy as np
 import time
-
+from transposition import TranspositionTable
 
 class SupiBot(Bot, MinMax):
 
@@ -12,6 +12,7 @@ class SupiBot(Bot, MinMax):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
+        self.transTable = TranspositionTable()
 
     def make_turn(self):
         if not self.root:
@@ -20,11 +21,12 @@ class SupiBot(Bot, MinMax):
             self.root.value = 0
 
         # update board state
-        if not (self.root.state - self.board).all():
-            for his_turn in self.root.children:
-                if (self.board - his_turn.state).all():
-                    self.root = his_turn
-                    break
+        #TODO: FIX these here...
+        #if not (self.root.state - self.board).all():
+        #    for his_turn in self.root.children:
+        #        if (self.board - his_turn.state).all():
+        #            self.root = his_turn
+        #            break
                     
         #fixed search time per turn: 0.5s
         start = time.time()
@@ -32,13 +34,15 @@ class SupiBot(Bot, MinMax):
             self.minmax(i, self.root)
             if time.time() - start > 0.5:
                 if self.debugMode:
-                    print('current depth '+str(i))
+                    print('current depth '+str(i)+' time:'+str(time.time() - start))
                 break
 
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
-        self.root = None #there are some crazy behaviors when the three remains, and it's easier to debug
+        #there are some crazy behaviors when the three and TransTable remains, and it's easier to debug
+        self.root = None 
+        self.transTable = None
 
     def expand_node(self, node):
         if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
@@ -53,9 +57,15 @@ class SupiBot(Bot, MinMax):
             new_node = Node(new_state, node)
             new_node.play_col = col_nr
             
-            new_node.value = self.rate_state(new_node.state)
-            if self.debugMode:
-                print('col-no:' + str(col_nr)+ ' '+str(new_node.value))
+            #do not calculate the same positions twice
+            draft_node = self.transTable.get_entry(new_node)
+            if draft_node == None:
+                new_node.value = self.rate_state(new_node.state)
+                self.transTable.add_entry(new_node)
+            else:
+                #if the board sate is already calculated: use the value from the Transposition Table
+                new_node.value = draft_node.node.value
+                
             node.children.append(new_node)
 
     def opponent_id(self):
