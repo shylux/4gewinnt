@@ -12,9 +12,10 @@ class SupiBot(Bot, MinMax):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
-        self.transTable = TranspositionTable()
-
+        
     def make_turn(self):
+        
+        
         if not self.root:
             self.root = Node(self.board)
             self.root.max_node = True
@@ -30,6 +31,7 @@ class SupiBot(Bot, MinMax):
                     
         #fixed search time per turn: 0.5s
         start = time.time()
+        self.transTable = TranspositionTable()
         for i in range(42):
             self.minmax(i, self.root)
             if time.time() - start > 0.5:
