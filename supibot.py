@@ -29,12 +29,20 @@ class SupiBot(Bot, MinMax):
         #            self.root = his_turn
         #            break
                     
-        #fixed search time per turn: 0.5s
+        
         start = time.time()
         self.transTable = TranspositionTable()
+
+		#fixed search time per turn: 0.5s
+        time_slice = 0.5
+
+		#reduce time_slice if we have to hurry up        
+		if self.time_left() < 4000:
+            time_slice = 0.3
+            
         for i in range(42):
             self.minmax(i, self.root)
-            if time.time() - start > 0.5:
+            if time.time() - start > time_slice:
                 if self.debugMode:
                     print('current depth '+str(i)+' time:'+str(time.time() - start))
                 break
