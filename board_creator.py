@@ -57,7 +57,7 @@ creator.create_boards()
 print(len(creator.boards[level]))
 creator.remove_invalid_boards()
 print(len(creator.boards[level]))
-creator.store_boards()
+#creator.store_boards()
 creator.restore_boards()
 print(len(creator.boards[level]))
 

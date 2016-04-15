@@ -12,6 +12,7 @@ class SupiBot(Bot, MinMax):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
+        self.transTable = TranspositionTable()
         
     def make_turn(self):
         
@@ -31,8 +32,7 @@ class SupiBot(Bot, MinMax):
                     
         
         start = time.time()
-        self.transTable = TranspositionTable()
-
+        
 		#fixed search time per turn: 0.5s
         time_slice = 0.5
 
@@ -52,7 +52,6 @@ class SupiBot(Bot, MinMax):
         self.root = best_option
         #there are some crazy behaviors when the three and TransTable remains, and it's easier to debug
         self.root = None 
-        self.transTable = None
 
     def expand_node(self, node):
         if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
