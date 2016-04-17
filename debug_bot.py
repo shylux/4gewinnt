@@ -23,4 +23,5 @@ if __name__ == "__main__":
 	bot.settings['your_botid'] = 2
 	bot.settings['field_columns'] = 7
 	bot.settings['field_rows'] = 6
-	cProfile.run('bot.make_turn()')
+	bot.make_turn()
+    #cProfile.run('bot.make_turn()')

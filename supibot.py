@@ -12,7 +12,8 @@ class SupiBot(Bot, MinMax):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
-        self.transTable = TranspositionTable()
+        self.transTable = TranspositionTable(6,7,2)
+
         
     def make_turn(self):
         
@@ -21,7 +22,8 @@ class SupiBot(Bot, MinMax):
             self.root = Node(self.board)
             self.root.max_node = True
             self.root.value = 0
-
+        
+        self.root.hash = self.transTable.calculate_board_hash(self.board)
         # update board state
         #TODO: FIX these here...
         #if not (self.root.state - self.board).all():
@@ -67,13 +69,17 @@ class SupiBot(Bot, MinMax):
             new_node.play_col = col_nr
             
             #do not calculate the same positions twice
-            draft_node = self.transTable.get_entry(new_node)
+            draft_node = self.transTable.get_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
+            
             if draft_node == None:
                 new_node.value = self.rate_state(new_node.state)
-                self.transTable.add_entry(new_node)
+                
+                self.transTable.add_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
+                
             else:
                 #if the board sate is already calculated: use the value from the Transposition Table
                 new_node.value = draft_node.node.value
+                new_node.hash = draft_node.node.hash
                 
             node.children.append(new_node)
 

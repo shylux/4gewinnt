@@ -19,7 +19,9 @@ class Bot(object):
     round = -1
     board = np.zeros((6, 7), dtype=np.uint8)  # Access with [row_nr, col_nr]. [0,0] is on the top left.
     timeout = -1
-
+    last_played_stone_col = -1
+    last_played_stone_row = -1
+	
     def make_turn(self):
         """ This method is for calculating and executing the next play.
             Make the play by calling place_disc exactly once.
@@ -39,8 +41,10 @@ class Bot(object):
         new_board = np.copy(board)
         for row_nr in reversed(range(self.rows())):
             if new_board[row_nr, col_nr] == 0:
-                new_board[row_nr, col_nr] = curr_player
-                return new_board
+				new_board[row_nr, col_nr] = curr_player
+				self.last_played_stone_col = col_nr
+				self.last_played_stone_row = row_nr
+				return new_board
 
     def id(self):
         """ Returns own bot id. """
