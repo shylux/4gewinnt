@@ -13,24 +13,26 @@ class SupiBot(Bot, MinMax):
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
         self.transTable = TranspositionTable(6,7,2)
-
+        self.lastDepth = 0
         
     def make_turn(self):
         
-        
+        #do this in the first turn
         if not self.root:
             self.root = Node(self.board)
             self.root.max_node = True
             self.root.value = 0
+            self.root.hash = None
         
-        self.root.hash = self.transTable.calculate_board_hash(self.board)
-        # update board state
-        #TODO: FIX these here...
-        #if not (self.root.state - self.board).all():
-        #    for his_turn in self.root.children:
-        #        if (self.board - his_turn.state).all():
-        #            self.root = his_turn
-        #            break
+        board_hash = self.transTable.calculate_board_hash(self.board)
+
+        # update board state (reuse the before calculated treee)
+        if self.root.hash != None and  board_hash != self.root.hash:
+            for his_turn in self.root.children:
+                if his_turn.hash == board_hash:
+                    self.root = his_turn
+        else:
+            self.root.hash = board_hash
                     
         
         start = time.time()
@@ -41,9 +43,13 @@ class SupiBot(Bot, MinMax):
 		#reduce time_slice if we have to hurry up        
         if self.time_left() < 4000:
             time_slice = 0.3
-            
-        for i in range(42):
+        
+    
+        lBoundRange = max(1,self.lastDepth-1)
+        dephSearchRange = range(lBoundRange,42)    
+        for i in dephSearchRange:
             self.minmax(i, self.root)
+            self.lastDepth = i
             if time.time() - start > time_slice:
                 if self.debugMode:
                     print('current depth '+str(i)+' time:'+str(time.time() - start))
@@ -52,8 +58,6 @@ class SupiBot(Bot, MinMax):
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
-        #there are some crazy behaviors when the three and TransTable remains, and it's easier to debug
-        self.root = None 
 
     def expand_node(self, node):
         if node.value == sys.maxsize or node.value == -sys.maxsize:  # leaf node
