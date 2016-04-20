@@ -14,6 +14,14 @@ class SupiBot(Bot, MinMax):
         self.player_id_made_last_turn = None
         self.transTable = TranspositionTable(6,7,2)
         self.lastDepth = 0
+        self.col_order = list(range(0,7))
+        self.col_order[0] = 3
+        self.col_order[1] = 4
+        self.col_order[2] = 2
+        self.col_order[3] = 5
+        self.col_order[4] = 1
+        self.col_order[5] = 6
+        self.col_order[6] = 0
         
     def make_turn(self):
         
@@ -64,7 +72,7 @@ class SupiBot(Bot, MinMax):
             return
 
         player_id = self.id() if node.max_node else self.opponent_id()  # other player than node
-        for col_nr in range(self.cols()):
+        for col_nr in self.col_order:
             try:
                 new_state = self.simulate_place_disc(node.state, col_nr, player_id)
             except Bot.ColumnFullException:
