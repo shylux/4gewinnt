@@ -55,9 +55,9 @@ class MinMax(object):
                     break
 
         # sort for optimization
-       if node.max_node:
+        if node.max_node:
             node.children.sort(key=lambda n: n.value,reverse=True)
         else:
-           node.children.sort(key=lambda n: n.value) 
+            node.children.sort(key=lambda n: n.value) 
 
         return node.value
