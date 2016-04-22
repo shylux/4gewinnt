@@ -6,9 +6,10 @@ import numpy as np
 import time
 from transposition import TranspositionTable
 
+
 class SupiBot(Bot, MinMax):
 
-    def __init__(self,debugMode = False):
+    def __init__(self, debugMode = False):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
@@ -25,7 +26,7 @@ class SupiBot(Bot, MinMax):
         
     def make_turn(self):
         
-        #do this in the first turn
+        # do this in the first turn
         if not self.root:
             self.root = Node(self.board)
             self.root.max_node = True
@@ -35,26 +36,24 @@ class SupiBot(Bot, MinMax):
         board_hash = self.transTable.calculate_board_hash(self.board)
 
         # update board state (reuse the before calculated treee)
-        if self.root.hash != None and  board_hash != self.root.hash:
+        if self.root.hash and board_hash != self.root.hash:
             for his_turn in self.root.children:
                 if his_turn.hash == board_hash:
                     self.root = his_turn
         else:
             self.root.hash = board_hash
-                    
-        
+
         start = time.time()
         
-		#fixed search time per turn: 0.5s
+        # fixed search time per turn: 0.5s
         time_slice = 0.5
 
-		#reduce time_slice if we have to hurry up        
+        # reduce time_slice if we have to hurry up
         if self.time_left() < 4000:
             time_slice = 0.3
-        
-    
+
         lBoundRange = max(1,self.lastDepth-1)
-        dephSearchRange = range(lBoundRange,42)    
+        dephSearchRange = range(lBoundRange,42)
         for i in dephSearchRange:
             self.minmax(i, self.root)
             self.lastDepth = i
@@ -80,16 +79,22 @@ class SupiBot(Bot, MinMax):
             new_node = Node(new_state, node)
             new_node.play_col = col_nr
             
-            #do not calculate the same positions twice
-            draft_node = self.transTable.get_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
+            # do not calculate the same positions twice
+            draft_node = self.transTable.get_entry(new_node,
+                                                   self.last_played_stone_row,
+                                                   self.last_played_stone_col,
+                                                   player_id)
             
-            if draft_node == None:
+            if not draft_node:
                 new_node.value = self.rate_state(new_node.state)
                 
-                self.transTable.add_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
+                self.transTable.add_entry(new_node,
+                                          self.last_played_stone_row,
+                                          self.last_played_stone_col,
+                                          player_id)
                 
             else:
-                #if the board sate is already calculated: use the value from the Transposition Table
+                # if the board sate is already calculated: use the value from the Transposition Table
                 new_node.value = draft_node.node.value
                 new_node.hash = draft_node.node.hash
                 
@@ -108,7 +113,6 @@ class SupiBot(Bot, MinMax):
             value = SupiBot.rate_line(line)
             if self.id() == 2:  # invert value if we are player 2
                 value = -value
-            
                         
             if value == sys.maxsize or value == -sys.maxsize:  # return if someone won
                 return value
