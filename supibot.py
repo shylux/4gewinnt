@@ -109,7 +109,7 @@ class SupiBot(Bot, MinMax):
     def rate_state(self, board):
         """ Rates the board. A higher value means a better chance to win. """
         board_sum = 0
-        for line in self.double_lines(board):
+        for line in self.lines(board):
             value = SupiBot.rate_line(line)
             if self.id() == 2:  # invert value if we are player 2
                 value = -value
@@ -125,36 +125,54 @@ class SupiBot(Bot, MinMax):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
         curr_player = 0  # the current owner of the last non-empty spot in the line
-        possible_fours = []  # eg. [(idx, my_stone_count)]
-        for idx, val in enumerate(line_values):
-            if val != 0:
-                if val != curr_player:
+        take_over_idx = 0  # the index where the player took over
+        win_spot = []  # placing a stone in this place will win the player the game
+
+        consecutive_stones = 0
+        player_stones = 0  # amount of stones of the curr player in the last 4 spots
+        last_stone = 0
+
+        for idx, player in enumerate(line_values):
+
+            # add stones
+            if player != 0:
+                if player != curr_player:
                     # the other player takes over
-                    possible_fours = []
-                    curr_player = val
+                    if curr_player != 0:
+                        take_over_idx = idx  # if there was not an earlyer stone its all mine!
+                    consecutive_stones = 1
+                    player_stones = 1
+                    curr_player = player
+
                 else:
-                    for fidx, four_chance in enumerate(possible_fours):
-                        possible_fours[fidx] = (four_chance[0], four_chance[1] + 1)
+                    player_stones += 1
 
-                # add a new possible chance
-                possible_fours.append((idx, 1))
+                    if last_stone == player:
+                        consecutive_stones += 1
 
-            if len(possible_fours) > 0:
-                if idx - possible_fours[0][0] == 3:
-                    four_chance = possible_fours.pop(0)
-                    # positive vor player one, negative for player 2
-                    value = four_chance[1] ** 2  # one stone = 1, two stones = 4, three stones = 9
-                    if curr_player == 1:
-                        line_sum += value
-                    else:
-                        line_sum -= value
+            # remove stones > 4 spaces away
+            if idx >= 4 and idx - take_over_idx >= 3:
+                removed_idx = idx - 4
+                if line_values[removed_idx] == curr_player:
+                    player_stones -= 1
+                    if line_values[removed_idx+1] == curr_player:
+                        consecutive_stones -= 1
 
-                    # check if someone won
-                    if four_chance[1] == 4:  # four stone = win
-                        if curr_player == 1:
-                            return sys.maxsize
-                        else:
-                            return -sys.maxsize
+            # check the winn chance
+            if curr_player != 0 and idx - take_over_idx >= 3:
+                # check for win
+                if player_stones == 4:
+                    return sys.maxsize if curr_player == 1 else -sys.maxsize
+
+                value = player_stones * consecutive_stones
+                if curr_player == 1:
+                    line_sum += value
+                else:
+                    line_sum -= value
+
+            # save last stone
+            last_stone = player
+
         return line_sum
 
     def lines(self, board):
@@ -173,12 +191,6 @@ class SupiBot(Bot, MinMax):
         board = np.fliplr(board)
         for diag_nr in range(-(self.rows() - 4), self.cols() - 3):
             yield np.diag(board, diag_nr)
-
-    def double_lines(self, board):
-        """ Generates all lines plus their reverse. """
-        for line in self.lines(board):
-            yield line
-            yield line[::-1]
 
 
 if __name__ == '__main__':

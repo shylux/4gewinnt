@@ -2,8 +2,12 @@ from supibot import SupiBot
 import numpy as np
 
 def test_state(board):
-    print "Score: %s" % bot.rate_state(board)
-    print board
+    print("Score: %s" % bot.rate_state(board))
+    print(board)
+
+def test_line(line):
+    print("Score: %s" % bot.rate_line(line))
+    print(line)
 
 bot = SupiBot()
 bot.settings = {
@@ -13,6 +17,9 @@ bot.settings = {
 }
 board = np.zeros((6, 7), dtype=np.uint8)
 
+test_line([1, 1, 0, 1, 0, 0, 0])
+test_line([1, 0, 1, 1, 0, 0, 0])
+
 test_state(board)
 
 board = bot.simulate_place_disc(board, 3, 1)
@@ -21,5 +28,15 @@ test_state(board)
 board = bot.simulate_place_disc(board, 3, 2)
 test_state(board)
 
+board0 = bot.simulate_place_disc(board, 0, 1)
+test_state(board0)
+board1 = bot.simulate_place_disc(board, 1, 1)
+test_state(board1)
+board2 = bot.simulate_place_disc(board, 2, 1)
+test_state(board2)
+
+board = bot.simulate_place_disc(board, 0, 1)
 board = bot.simulate_place_disc(board, 1, 1)
+test_state(board)
+board = bot.simulate_place_disc(board, 2, 1)
 test_state(board)

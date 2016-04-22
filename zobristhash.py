@@ -15,7 +15,7 @@ class zobristHash:
         for x in range(self.x):
             for y in range(self.y):
                 for state in range(self.states):
-                    self.map[x][y][state] = getrandbits(32)
+                    self.map[x][y][state] = getrandbits(24)
 
     def calculate_hash(self, last_hash, x, y, state):
         return last_hash ^ self.map[x][y][state]
