@@ -110,8 +110,13 @@ class SupiBot(Bot, MinMax):
     def rate_state(self, board):
         """ Rates the board. A higher value means a better chance to win. """
         board_sum = 0
+        win_chances = set()
+
         for line in self.lines(board):
-            value = SupiBot.rate_line(line)
+            value, wcs = SupiBot.rate_line(line)
+
+            win_chances |= wcs
+
             if self.id() == 2:  # invert value if we are player 2
                 value = -value
                         
@@ -119,12 +124,44 @@ class SupiBot(Bot, MinMax):
                 return value
 
             board_sum += value
+
+        # evaluate win chances
+        # check for 2 win chances on top of each other. This will force a win
+        win_chances_value = 0
+
+        def get_double_win_chances(win_chances):
+            double_win_chances = []
+            for wc in win_chances:
+                for wc2 in win_chances:
+                    if wc[0][0]-1 == wc2[0][0] and wc[0][1] == wc2[0][1] and wc[1] == wc2[1]:
+                        double_win_chances.append(wc)
+            return double_win_chances
+
+        dwcs = get_double_win_chances(win_chances)
+        cut_win_chances = []
+        for wc in win_chances:
+            cut = False
+            for dwc in dwcs:
+                if dwc[0][0] > wc[0][0]+1 and dwc[0][1] == wc[0][1]:
+                    cut = True
+            if not cut:
+                cut_win_chances.append(wc)
+        dwcs = get_double_win_chances(cut_win_chances)
+
+        for wc in cut_win_chances:
+            win_chances_value += 20 if wc[1] == 1 else -20
+        for dwc in dwcs:
+            win_chances_value += 100 if wc[1] == 1 else -100
+
+        board_sum += win_chances_value if self.id() == 1 else -win_chances_value
         return board_sum
 
     @staticmethod
     def rate_line(line):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
+        win_chances = set()
+
         curr_player = 0  # the current owner of the last non-empty spot in the line
         take_over_idx = 0  # the index where the player took over
         win_spot = []  # placing a stone in this place will win the player the game
@@ -164,18 +201,27 @@ class SupiBot(Bot, MinMax):
             if curr_player != 0 and idx - take_over_idx >= 3:
                 # check for win
                 if player_stones == 4:
-                    return sys.maxsize if curr_player == 1 else -sys.maxsize
+                    line_sum = sys.maxsize if curr_player == 1 else -sys.maxsize
+                    return line_sum, set()
 
-                value = player_stones * consecutive_stones
-                if curr_player == 1:
-                    line_sum += value
+                # handle win chances in view of whole board
+                elif player_stones == 3:
+                    for i in range(take_over_idx, idx+1):
+                        if line[i][0] == 0:  # found the free space
+                            win_chance = tuple([line[i][1], curr_player])
+                            win_chances |= set([win_chance])
+
                 else:
-                    line_sum -= value
+                    value = player_stones * consecutive_stones
+                    if curr_player == 1:
+                        line_sum += value
+                    else:
+                        line_sum -= value
 
             # save last stone
             last_stone = player
 
-        return line_sum
+        return line_sum, win_chances
 
     def lines_coords_arrays(self):
         """ Generates all lines on the board (also diagonals) and yields the  coordinates of those lines as lists.
