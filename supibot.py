@@ -13,6 +13,7 @@ class SupiBot(Bot, MinMax):
         self.root = None
         self.debugMode = debugMode
         self.player_id_made_last_turn = None
+        self.cached_lines_coords = None
         self.transTable = TranspositionTable(6,7,2)
         self.lastDepth = 0
         self.col_order = list(range(0,7))
@@ -121,7 +122,7 @@ class SupiBot(Bot, MinMax):
         return board_sum
 
     @staticmethod
-    def rate_line(line_values):
+    def rate_line(line):
         """ Rates the line from the perspective of player 1. """
         line_sum = 0
         curr_player = 0  # the current owner of the last non-empty spot in the line
@@ -132,14 +133,14 @@ class SupiBot(Bot, MinMax):
         player_stones = 0  # amount of stones of the curr player in the last 4 spots
         last_stone = 0
 
-        for idx, player in enumerate(line_values):
+        for idx, (player, (row, col)) in enumerate(line):
 
             # add stones
             if player != 0:
                 if player != curr_player:
                     # the other player takes over
                     if curr_player != 0:
-                        take_over_idx = idx  # if there was not an earlyer stone its all mine!
+                        take_over_idx = idx  # if there was not an earlier stone its all mine!
                     consecutive_stones = 1
                     player_stones = 1
                     curr_player = player
@@ -152,10 +153,11 @@ class SupiBot(Bot, MinMax):
 
             # remove stones > 4 spaces away
             if idx >= 4 and idx - take_over_idx >= 3:
-                removed_idx = idx - 4
-                if line_values[removed_idx] == curr_player:
+                rm_idx = idx - 4
+                removed_stone = line[rm_idx][0]
+                if removed_stone == curr_player:
                     player_stones -= 1
-                    if line_values[removed_idx+1] == curr_player:
+                    if line[rm_idx+1][0] == curr_player:  # check if we removed a consecutive stone
                         consecutive_stones -= 1
 
             # check the winn chance
@@ -175,23 +177,42 @@ class SupiBot(Bot, MinMax):
 
         return line_sum
 
-    def lines(self, board):
-        """ Generates all lines on the board (also diagonals) and yields the values on those lines as lists.
+    def lines_coords_arrays(self):
+        """ Generates all lines on the board (also diagonals) and yields the  coordinates of those lines as lists.
         """
-        # all rows
-        for row in board:
-            yield row
-        # all columns
-        for col_nr in range(self.cols()):
-            yield board[:, col_nr]
-        # diagonals from top left to bottom right
-        for diag_nr in range(-(self.rows() - 4), self.cols() - 3):
-            yield np.diag(board, diag_nr)
-        # diagonals from top right to bottom left
-        board = np.fliplr(board)
-        for diag_nr in range(-(self.rows() - 4), self.cols() - 3):
-            yield np.diag(board, diag_nr)
 
+        idxs = np.indices((6, 7))
+
+        for row in range(self.rows()):
+            yield idxs[:, row]
+
+        for col in range(self.cols()):
+            yield idxs[:, :, col]
+
+        for diag_nr in range(-(self.rows() - 4), self.cols() - 3):
+            yield [np.diag(idxs[0], diag_nr), np.diag(idxs[1], diag_nr)]
+
+        idxs[1] = np.fliplr(idxs[1])
+
+        for diag_nr in range(-(self.rows() - 4), self.cols() - 3):
+            yield [np.diag(idxs[0], diag_nr), np.diag(idxs[1], diag_nr)]
+
+    def lines_coords(self):
+        """ Generates coordinates of line segments
+        """
+        if self.cached_lines_coords:
+            return self.cached_lines_coords
+        self.cached_lines_coords = []
+        for line in self.lines_coords_arrays():
+            line_coords = []
+            for idx in range(len(line[0])):
+                line_coords.append(tuple([line[0][idx], line[1][idx]]))
+            self.cached_lines_coords.append(line_coords)
+        return self.cached_lines_coords
+
+    def lines(self, board):
+        for line in self.lines_coords():
+            yield [tuple([board[coord[0], coord[1]], coord]) for coord in line]
 
 if __name__ == '__main__':
     """ Run the bot! """

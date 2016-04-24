@@ -17,8 +17,8 @@ bot.settings = {
 }
 board = np.zeros((6, 7), dtype=np.uint8)
 
-test_line([1, 1, 0, 1, 0, 0, 0])
-test_line([1, 0, 1, 1, 0, 0, 0])
+# test_line([1, 1, 0, 1, 0, 0, 0])
+# test_line([1, 0, 1, 1, 0, 0, 0])
 
 test_state(board)
 
