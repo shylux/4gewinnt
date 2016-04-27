@@ -213,10 +213,7 @@ class SupiBot(Bot, MinMax):
 
                 else:
                     value = player_stones * consecutive_stones
-                    if curr_player == 1:
-                        line_sum += value
-                    else:
-                        line_sum -= value
+                    line_sum += value if curr_player == 1 else -value
 
             # save last stone
             last_stone = player
