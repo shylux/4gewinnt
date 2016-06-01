@@ -51,10 +51,10 @@ class MinMax(object):
             else:
                 node.value = min(node.value, child_value)
                 beta = node.value
-                if beta <= alpha:
+                if beta <= alpha: # check for pruning
                     break
 
-        # sort for optimization
+        # sort for better alpha-Beta Performance
         if node.max_node:
             node.children.sort(key=lambda n: n.value,reverse=True)
         else:

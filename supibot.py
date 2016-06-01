@@ -25,6 +25,7 @@ class SupiBot(Bot, MinMax):
             self.root.value = 0
             self.root.hash = None
         
+        #calculate the current Board hash once per turn
         board_hash = self.transTable.calculate_board_hash(self.board)
 
         # update board state (reuse the before calculated tree)
@@ -55,8 +56,7 @@ class SupiBot(Bot, MinMax):
                 if self.debugMode:
                     print('current depth '+str(i)+' time:'+str(time.time() - start))
                 break
-                
-		#Order Childen for better Alpha Beta Performance
+        #we assume, that the minmax-Tree is already sorted        
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
@@ -75,6 +75,7 @@ class SupiBot(Bot, MinMax):
             new_node.play_col = col_nr
             
             #do not calculate the same positions twice (Using a Transposition Table to store the Heuristics)
+            #we do this, because the heuristic calculation is very slow
             draft_node = self.transTable.get_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
             
             if draft_node == None:
