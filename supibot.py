@@ -6,6 +6,7 @@ import numpy as np
 import time
 from transposition import TranspositionTable
 
+#Our Bot Implementation
 class SupiBot(Bot, MinMax):
 
     def __init__(self,debugMode = False):
@@ -26,7 +27,7 @@ class SupiBot(Bot, MinMax):
         
         board_hash = self.transTable.calculate_board_hash(self.board)
 
-        # update board state (reuse the before calculated treee)
+        # update board state (reuse the before calculated tree)
         if self.root.hash != None and  board_hash != self.root.hash:
             for his_turn in self.root.children:
                 if his_turn.hash == board_hash:
@@ -44,7 +45,7 @@ class SupiBot(Bot, MinMax):
         if self.time_left() < 4000:
             time_slice = 0.3
         
-    
+		#Do Not recalculated the already calculated TreeLevel (e.g. the three from the last turn)
         lBoundRange = max(1,self.lastDepth-1)
         dephSearchRange = range(lBoundRange,42)    
         for i in dephSearchRange:
@@ -54,7 +55,8 @@ class SupiBot(Bot, MinMax):
                 if self.debugMode:
                     print('current depth '+str(i)+' time:'+str(time.time() - start))
                 break
-
+                
+		#Order Childen for better Alpha Beta Performance
         best_option = self.root.children[0]
         self.place_disc(best_option.play_col)
         self.root = best_option
@@ -72,7 +74,7 @@ class SupiBot(Bot, MinMax):
             new_node = Node(new_state, node)
             new_node.play_col = col_nr
             
-            #do not calculate the same positions twice
+            #do not calculate the same positions twice (Using a Transposition Table to store the Heuristics)
             draft_node = self.transTable.get_entry(new_node,self.last_played_stone_row,self.last_played_stone_col,player_id)
             
             if draft_node == None:
@@ -108,6 +110,7 @@ class SupiBot(Bot, MinMax):
             board_sum += value
         return board_sum
 
+	#Heuristic Function for external Nodes
     @staticmethod
     def rate_line(line_values):
         """ Rates the line from the perspective of player 1. """
